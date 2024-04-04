@@ -43,3 +43,4 @@ some question marks ?
 1. which functiom is responsible for invoking callouts , have a short look at it
 2. how can we call KfdGetRefCallout and KfdDeRefCallout? what is the prototype ? how can we call FeGetWfpGlobalPtr? 
 3. are callout ids guranteed to be in acceding order ? send the max ID over IOCTL and for each get the callout structure ?
+4. where is the callout layer stored ? when we register callout in the filter engine it gets added to the wfpglobal array? maybe the invocation process iterates over the layer's registered callout ids and finds the corresponding callout classify 
