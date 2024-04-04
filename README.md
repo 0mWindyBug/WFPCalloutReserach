@@ -18,4 +18,9 @@ we would also like to gather as much information as possible about the callout i
 
 two functions we might be able to take advantage of in the process are 
 1. FwpmCalloutEnum(allowing us to enumerate all callout ids from usermode)
-2. KfdGetCalloutRef (allowing us to get a callout struct pointer from callout id , undocumented export of netio.sys)
+2. KfdGetRefCallout (allowing us to get a callout struct pointer from callout id , undocumented export of netio.sys), we must call KfdDeRefCallout to decrement the reference
+
+some question marks ?
+1. which functiom is responsible for invoking callouts , have a short look at it
+2. how can we call KfdGetRefCallout and KfdDeRefCallout? what is the prototype ?
+3. are callout ids guranteed to be in acceding order ? send the max ID over IOCTL and for each get the callout structure ?
