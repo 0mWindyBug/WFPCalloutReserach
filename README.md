@@ -16,11 +16,30 @@ what woukd we like? a way to enumerate all registered callout routines on the sy
 
 we would also like to gather as much information as possible about the callout identified in enumeration (ie which layer is it on? that way we can silence specific callouts )
 
-two functions we might be able to take advantage of in the process are 
+ functions we might be able to take advantage of in the process are 
 1. FwpmCalloutEnum(allowing us to enumerate all callout ids from usermode)
 2. KfdGetRefCallout (allowing us to get a callout struct pointer from callout id , undocumented export of netio.sys), we must call KfdDeRefCallout to decrement the reference
+3. FeGetWfpGlobalPtr (returns a pointer to WfpGlobal)
 
+practically : 
+__int64 __fastcall KfdGetRefCallout(__int64 CalloutId, _QWORD *CalloutEntry) 
+
+it will call -> FeGetRefCalloutEx(CalloutId, 0, &LocCalloutEntry); 
+
+which in turn calls 
+
+GetCalloutEntryEx(CalloutId, Zero, CalloutEntryPtr);
+
+which checks 
+ if ( CalloutId >= *(_DWORD *)(gWfpGlobal + 0x198) )
+
+ and if the callout id is smaller 
+
+ CalloutEntry = 0x60i64 * CalloutId + *(_QWORD *)(gWfpGlobal + 0x1A0);
+
+
+   
 some question marks ?
 1. which functiom is responsible for invoking callouts , have a short look at it
-2. how can we call KfdGetRefCallout and KfdDeRefCallout? what is the prototype ?
+2. how can we call KfdGetRefCallout and KfdDeRefCallout? what is the prototype ? how can we call FeGetWfpGlobalPtr? 
 3. are callout ids guranteed to be in acceding order ? send the max ID over IOCTL and for each get the callout structure ?
