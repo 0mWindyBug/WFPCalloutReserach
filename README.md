@@ -43,7 +43,8 @@ which checks
 fwpkclnt!FwpsCalloutRegister<X> -> fwpkclnt!FwppCalloutRegister -> ( fwpkclnt!FwppCalloutFindByKey) (there's also some global named gFwppCallouts)
 fwpkclnt!FwppCalloutRegister -> NETIO!KfdAddCalloutEntry 
 
- NETIO!KfdAddCalloutEntry -> NETIO!FeAddCalloutEntry
+ NETIO!KfdAddCalloutEntry -> NETIO!FeAddCalloutEntry -> WfpAllocateCalloutEntry
+
 
    
 some question marks ?
