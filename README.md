@@ -38,6 +38,11 @@ which checks
  CalloutEntry = 0x60i64 * CalloutId + *(_QWORD *)(gWfpGlobal + 0x1A0);
 
 
+
+The gWfpGlobal structure has a member called CalloutTable (named by yourself), which is a pointer. The default initial size of this memory is 0x14000 bytes.
+Every time there is a WFP registration, this value will be expanded/modified: memory will be re-applied, data copied, and then the original memory will be deleted.
+
+
 # Callout Registration 
 
 fwpkclnt!FwpsCalloutRegister<X> -> fwpkclnt!FwppCalloutRegister -> ( fwpkclnt!FwppCalloutFindByKey) (there's also some global named gFwppCallouts)
