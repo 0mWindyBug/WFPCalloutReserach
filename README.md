@@ -38,6 +38,12 @@ which checks
  CalloutEntry = 0x60i64 * CalloutId + *(_QWORD *)(gWfpGlobal + 0x1A0);
 
 
+# Callout Registration 
+
+fwpkclnt!FwpsCalloutRegister<X> -> fwpkclnt!FwppCalloutRegister -> ( fwpkclnt!FwppCalloutFindByKey) (there's also some global named gFwppCallouts)
+fwpkclnt!FwppCalloutRegister -> NETIO!KfdAddCalloutEntry 
+
+
    
 some question marks ?
 1. which functiom is responsible for invoking callouts , have a short look at it
