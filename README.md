@@ -47,7 +47,18 @@ the basic policy is :
 ## Enumerating Callouts  
 the more complex and interesting network filtering and inspection logic is implemented through callouts , enumerating registered callouts (and their actual addresses) can be useful for anyone with the intention of silecing or manipulating them , or if you are a WFP driver developer -for debugging.  so where do we start ?  
 
-a driver registers a callout with the filter engine using FwpsCalloutRegister
+a driver registers a callout with the filter engine using FwpsCalloutRegister , passing a structure that describes the callout to be registered 
+```
+typedef struct FWPS_CALLOUT0_ {
+  GUID                                calloutKey;
+  UINT32                              flags;
+  FWPS_CALLOUT_CLASSIFY_FN0           classifyFn;
+  FWPS_CALLOUT_NOTIFY_FN0             notifyFn;
+  FWPS_CALLOUT_FLOW_DELETE_NOTIFY_FN0 flowDeleteFn;
+} FWPS_CALLOUT0;
+```
+the classify function is where the actual filtering logic is present , notify function is called when a filter that references the callout is added or removed 
+one more thing to note is a flag called FWP_CALLOUT_FLAG_CONDITIONAL_ON_FLOW  - A callout driver can specify this flag when registering a callout that will be added at a layer that supports data flows. If this flag is specified, the filter engine calls the callout driver's classifyFn0 callout function only if there is a context associated with the data flow. A callout driver associates a context with a data flow by calling the FwpsFlowAssociateContext0 function.
 
 in addition , a driver has to add the callout to a layer on the system using FwpmCalloutAdd (can also be done from UM)
 
@@ -129,7 +140,7 @@ LABEL_7:
   return CalloutEntry;
 }
 ```
-
+we can see our callout and all required information is stored in memory referenced by ( NETIO!gWfpGlobal + 0x198 ) * (CalloutId + 0x50) , in other words, NETIO!g_WfpGlobal + 0x198 (build specific offset) is an array of callout structures , each of size 0x50 (build specific size) , where at offset 0x10 we can find the ClassifyFunction 
 
 
 
