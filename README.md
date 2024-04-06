@@ -19,7 +19,7 @@ layers are used to categorize the network traffic to be evaluated , there are ro
 
 next we have filters , which are made up from conditions (source port , ip , application etc) and action (permit, block, callout unknown, callout terminating and callout inspection) 
 
-when the action is a callout the filter engine will call the callout classify function whenever the filter conditions match
+when the action is a callout the filter engine will call the callout classify function whenever the filter conditions match.
 a callout can return permit , block or continue (meaning the filter should be 'ignored') , if the action is callout terminating the callout should only return permit or block , if the it's inspection it should only return continue, unknown means the callout might terminate or not based on the result of the classification , 
 
 a sublayer is essentially a way to logically group filters (say you filter TCP traffic , and want to have different filters for ports hight than 1000 and lower than 1000 , you can create two sublayers) , hopfully it'll be more clear in the next section 
