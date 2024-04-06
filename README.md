@@ -65,7 +65,6 @@ fwpkclnt!FwpsCalloutRegister<X> -> fwpkclnt!FwppCalloutRegister -> fwpkclnt!Fwpp
 reversed code of NETIO!FeAddCalloutEntry is shown below 
 
 ```
-
 __int64 __fastcall FeAddCalloutEntry(
         int a1,
         __int64 ClassifyFunction,
@@ -86,7 +85,7 @@ __int64 __fastcall FeAddCalloutEntry(
   if ( CalloutEntry )
     goto LABEL_17;
   v14 = 1;
-  CalloutEntryPtr = *(_QWORD *)(gWfpGlobal + 408) + 80i64 * CalloutId;
+  CalloutEntryPtr = *(_QWORD *)(gWfpGlobal + 0x198) + 0x50i64 * CalloutId;
   if ( !*(_DWORD *)(CalloutEntryPtr + 4) && !*(_DWORD *)(CalloutEntryPtr + 8) )
   {
 LABEL_6:
@@ -104,7 +103,7 @@ LABEL_17:
     goto LABEL_6;
   }
 LABEL_7:
-  memset(CalloutEntryPtr, 0i64, 80i64);
+  memset(CalloutEntryPtr, 0i64, 0x50i64);
   *(_DWORD *)CalloutEntryPtr = a1;
   *(_DWORD *)(CalloutEntryPtr + 4) = 1;
   if ( a1 == 3 )
