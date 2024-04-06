@@ -1,4 +1,4 @@
-# WFPResearch
+![image](https://github.com/0mWindyBug/WFPResearch/assets/139051196/5abc1ed2-9c0a-44b6-8a08-e66b6367ecca)# WFPResearch
 short research revolving the windows filtering platform callout mechanism 
 
 # Sources 
@@ -14,7 +14,7 @@ WFP exposes both UM and KM apis , offering the ability to block , permit or adui
 
 as you might have guessed , WFP can be (and is) used by the windows firewall, network filters of security software and even rootkits.
 
-## layers, sublayers , filters and shims 
+### layers, sublayers , filters and shims 
 layers are used to categorize the network traffic to be evaluated , there are roughly a hundred layers (each is identified by a GUID) where filters and callouts can be attached and each represents a location the network processing path of a potential packet (for example you can attach on FWPM_LAYER_INBOUND_TRANSPORT_V4 which is  located in the receive path just after a received packet's transport header has been parsed by the network stack at the transport layer, but before any transport layer processing takes place) 
 
 next we have filters , which are made up from conditions (source port , ip , application etc) and action (permit, block, callout unknown, callout terminating and callout inspection) 
@@ -26,7 +26,7 @@ a sublayer is essentially a way to logically group filters (say you filter TCP t
 
 lastly we have the shims , a kernel component which is responsible for starting the classification -> applying the correct filters, potentially callouts to , at the end , make a decision regarding allowing / blocking the packet , the shim is called by the tcpip driver when a packet arrives at the network stack (of course , for each layer it goes through) 
 
-## Weight , Filter Arbitration and Policy 
+### Weight , Filter Arbitration and Policy 
 filter arbitration is the logic built into the WFP that is used to define how filters work with each other when making network filtering decisions 
 
 surely , as part of filter arbitration some ordering needs to be applied when assesing filters - that's where weight comes into play. 
@@ -44,7 +44,7 @@ the basic policy is :
 * a block decision is final , packet is discarded
 
 
-## Enumerating Callouts  
+# Enumerating Callouts  
 the more complex and interesting network filtering and inspection logic is implemented through callouts , enumerating registered callouts (and their actual addresses) can be useful for anyone with the intention of silecing or manipulating them , or if you are a WFP driver developer -for debugging.  so where do we start ?  
 
 a driver registers a callout with the filter engine using FwpsCalloutRegister , passing a structure that describes the callout to be registered 
@@ -68,7 +68,7 @@ generally , a callout is registered with a GUID, and identified internally by th
 
 an example callout driver is provided in the sources to demonstrate the registration of a filter that uses a callout 
 
-####  reversing the callout registration process
+##  reversing the callout registration mechanism
 as always with callouts (or 'callbacks) mechanisms , the registration function is a good starting point as it's likely at one point or another interact with how callouts are organised internally , reversing FwpsCalloutRegister we end up with the following sequence of calls : 
 
 fwpkclnt!FwpsCalloutRegister<X> -> fwpkclnt!FwppCalloutRegister -> fwpkclnt!FwppCalloutRegister -> NETIO!KfdAddCalloutEntry -> NETIO!FeAddCalloutEntry
@@ -149,12 +149,36 @@ The default initial size of this memory(gWfpGlobal!0x198) is 0x14000 bytes.
 every time there is a WFP registration, this value can be expanded/modified as needed ->  memory will be re-applied, data copied, and then the original memory will be deleted.
 also , as you can see gWfpGlobal+0x190 is initialized with 1024 , 1024 * 0x50 (entry size) = 0x14000 , meaning g_WfpGlobal+0x190 stores the max callout id in the array / number of entries. 
 
+#### FeGetWfpGlobalPtr 
+there's an exported function by NETIO that will return the address of gWfpGlobal
+![getwfpglobalptr](https://github.com/0mWindyBug/WFPResearch/assets/139051196/707f581a-82fe-42bc-961b-85afe1887b48)
+
+
 by now , we have enough knowledge to : 
-* signature scan for gWfpGlobal
+* find the address of NETIO!gWfpGlobal (sig scan from UM or FeGetWfpGlobalPtr if you can load a driver)
 * read offsets 0x198 and 0x190 to get the array pointer and the maximum number of entries
 * traverse all entries , the address stored at offset 0x10 from each entry is the classify callout : )
 
-whilst this is certinantly an option , and it has actually been actually used in the wild (by Lazarus's FudModule rootkit) , it's not the most reliable approach 
+whilst this is certianly an option , and it has actually been actually used in the wild (by Lazarus's FudModule rootkit) , it's not the most reliable approach we can take . 
+
+### NETIO!KfdGetRefCallout 
+there's a function called GetCalloutEntry in NETIO which is hard to not notice , reversed code below 
+![GetCalloutEntry](https://github.com/0mWindyBug/WFPResearch/assets/139051196/f7155b25-4115-45ea-8176-3b3bcb4cb105)
+
+even better ? there's an undocumented export called NETIO!KfdGetRefCallout which essentially wraps this GetCalloutEntry 
+(KfdGetRefCallout -> FeGetRefCallout > GetCalloutEntry) , now , by callout id we can get a pointer to it's corresponding callout entry without relying on the gWfpGlobal offsets : ) 
+![KfdGetREF](https://github.com/0mWindyBug/WFPResearch/assets/139051196/02e880ef-74d2-4202-9dff-0b765029c6a1)
+
+( note : we have to call NETIO!KfdDeRefCallout for each call )
+
+### FwpmCalloutEnum usermode API 
+putting it all together , we can find all registered callout ids on the system with the FwpmCalloutEnum0 API from usermode 
+the provided source WFPEnumDriver exposes an IOCTL that gets a callout id , and returns it's corresponding the CalloutEntry pointer , ClassifyFunction and NotifyFunction 
+the usermode client WFPEnum leverages that IOCTL for each callout id enumerated by FwpmCalloutEnum and display all information (the addresses , name , layer guid etc...) about each registered callout 
+
+running it we get the following output : ) 
+![CalloutsOutput](https://github.com/0mWindyBug/WFPResearch/assets/139051196/6c8d8ddf-18ed-4fad-919f-48ef2af3580b)
+
 
 
 
