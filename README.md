@@ -1,4 +1,4 @@
-![image](https://github.com/0mWindyBug/WFPResearch/assets/139051196/ee07c871-8a18-4615-9559-8ab8924ed85c)# WFPResearch
+# WFPResearch
 short research revolving the windows filtering platform callout mechanism 
 
 # Sources 
