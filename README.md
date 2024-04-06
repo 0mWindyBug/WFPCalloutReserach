@@ -3,7 +3,18 @@ research revolving the windows filtering platform callout mechanism
 
 
 
-# Callout Enumeration 
+## Intro to the Windows Filtering Platform
+
+what is it , who used it? (james forshaw)
+
+Components :
+layers , sublayers , filters(callouts and action  types) , shims
+
+Weight , Filter Arbitration , Policy 
+
+
+
+# Enumerating Callouts  
 a driver registers a callout with the filter engine using FwpsCalloutRegister
 
 in addition , a driver has to add the callout to a layer using FwpmCalloutAdd
@@ -50,7 +61,10 @@ fwpkclnt!FwppCalloutRegister -> NETIO!KfdAddCalloutEntry
 
  NETIO!KfdAddCalloutEntry -> NETIO!FeAddCalloutEntry -> WfpAllocateCalloutEntry
 
+## Callout Invocation 
 
+
+## Silencing Callouts  
    
 some question marks ?
 1. which functiom is responsible for invoking callouts , have a short look at it
