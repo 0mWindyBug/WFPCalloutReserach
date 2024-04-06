@@ -57,7 +57,81 @@ generally , a callout is registered with a GUID, and identified internally by th
 
 an example callout driver is provided in the sources to demonstrate the registration of a filter that uses a callout 
 
-#### Callout Registration 
+####  reversing the callout registration process
+as always with callouts (or 'callbacks) mechanisms , the registration function is a good starting point as it's likely at one point or another interact with how callouts are organised internally , reversing FwpsCalloutRegister we end up with the following sequence of calls : 
+fwpkclnt!FwpsCalloutRegister<X> -> fwpkclnt!FwppCalloutRegister -> fwpkclnt!FwppCalloutRegister -> NETIO!KfdAddCalloutEntry -> NETIO!FeAddCalloutEntry
+
+```
+
+__int64 __fastcall FeAddCalloutEntry(
+        int a1,
+        __int64 ClassifyFunction,
+        __int64 NotifyFn,
+        __int64 FlowDeleteFn,
+        int Flags,
+        char a6,
+        unsigned int CalloutId,
+        __int64 DeviceObject)
+{
+  __int64 v12; // rcx
+  __int64 CalloutEntry; // rdi
+  char v14; // bp
+  __int64 CalloutEntryPtr; // rbx
+  __int64 v16; // rax
+
+  CalloutEntry = WfpAllocateCalloutEntry(CalloutId);
+  if ( CalloutEntry )
+    goto LABEL_17;
+  v14 = 1;
+  CalloutEntryPtr = *(_QWORD *)(gWfpGlobal + 408) + 80i64 * CalloutId;
+  if ( !*(_DWORD *)(CalloutEntryPtr + 4) && !*(_DWORD *)(CalloutEntryPtr + 8) )
+  {
+LABEL_6:
+    if ( !CalloutEntry )
+      goto LABEL_7;
+LABEL_17:
+    WfpReportError(CalloutEntry, "FeAddCalloutEntry");
+    return CalloutEntry;
+  }
+  v16 = WfpReportSysErrorAsNtStatus(v12, "IsCalloutEntryAvailable", 0x40000000i64, 1i64);
+  CalloutEntry = v16;
+  if ( v16 )
+  {
+    WfpReportError(v16, "IsCalloutEntryAvailable");
+    goto LABEL_6;
+  }
+LABEL_7:
+  memset(CalloutEntryPtr, 0i64, 80i64);
+  *(_DWORD *)CalloutEntryPtr = a1;
+  *(_DWORD *)(CalloutEntryPtr + 4) = 1;
+  if ( a1 == 3 )
+    *(_QWORD *)(CalloutEntryPtr + 40) = ClassifyFunction;
+  else
+    *(_QWORD *)(CalloutEntryPtr + 16) = ClassifyFunction;
+  *(_DWORD *)(CalloutEntryPtr + 48) = Flags;
+  *(_BYTE *)(CalloutEntryPtr + 73) = a6;
+  *(_QWORD *)(CalloutEntryPtr + 24) = NotifyFn;
+  *(_QWORD *)(CalloutEntryPtr + 32) = FlowDeleteFn;
+  *(_BYTE *)(CalloutEntryPtr + 72) = 0;
+  *(_WORD *)(CalloutEntryPtr + 74) = 0;
+  *(_DWORD *)(CalloutEntryPtr + 76) = 0;
+  if ( DeviceObject )
+  {
+    ObfReferenceObject(DeviceObject);
+    *(_QWORD *)(CalloutEntryPtr + 64) = DeviceObject;
+  }
+  if ( !dword_1C007D018 || !(unsigned __int8)tlgKeywordOn(&dword_1C007D018, 2i64) )
+    v14 = 0;
+  if ( v14 )
+    WfpCalloutDiagTraceCalloutAddOrRegister(CalloutId, CalloutEntryPtr);
+  return CalloutEntry;
+}
+```
+
+
+
+
+
 
 
  functions we might be able to take advantage of in the process are 
