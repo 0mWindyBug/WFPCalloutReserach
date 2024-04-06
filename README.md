@@ -1,4 +1,4 @@
-# WFPResearch
+![image](https://github.com/0mWindyBug/WFPResearch/assets/139051196/ee07c871-8a18-4615-9559-8ab8924ed85c)# WFPResearch
 short research revolving the windows filtering platform callout mechanism 
 
 # Sources 
@@ -142,7 +142,19 @@ LABEL_7:
 ```
 we can see our callout and all required information is stored in memory referenced by ( NETIO!gWfpGlobal + 0x198 ) * (CalloutId + 0x50) , in other words, NETIO!g_WfpGlobal + 0x198 (build specific offset) is an array of callout structures , each of size 0x50 (build specific size) , where at offset 0x10 we can find the ClassifyFunction 
 
+messing around with other references to this offset , you'll find a function called NETIO!FeInitCalloutTable 
+![FeInitCalloutTable](https://github.com/0mWindyBug/WFPResearch/assets/139051196/08545957-5dc3-4776-a0de-d99d52c9502a)
 
+The default initial size of this memory(gWfpGlobal!0x198) is 0x14000 bytes. 
+every time there is a WFP registration, this value can be expanded/modified as needed ->  memory will be re-applied, data copied, and then the original memory will be deleted.
+also , as you can see gWfpGlobal+0x190 is initialized with 1024 , 1024 * 0x50 (entry size) = 0x14000 , meaning g_WfpGlobal+0x190 stores the max callout id in the array / number of entries. 
+
+by now , we have enough knowledge to : 
+* signature scan for gWfpGlobal
+* read offsets 0x198 and 0x190 to get the array pointer and the maximum number of entries
+* traverse all entries , the address stored at offset 0x10 from each entry is the classify callout : )
+
+whilst this is certinantly an option , and it has actually been actually used in the wild (by Lazarus's FudModule rootkit) , it's not the most reliable approach 
 
 
 
