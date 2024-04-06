@@ -183,7 +183,9 @@ even better ? there's an undocumented export called NETIO!KfdGetRefCallout which
 
 #### FwpmCalloutEnum usermode API 
 putting it all together , we can find all registered callout ids on the system with the FwpmCalloutEnum0 API from usermode 
-the provided source WFPEnumDriver exposes an IOCTL that gets a callout id , and returns it's corresponding the CalloutEntry pointer , ClassifyFunction and NotifyFunction 
+
+the provided source WFPEnumDriver exposes an IOCTL that gets a callout id , and returns it's corresponding  CalloutEntry pointer , ClassifyFunction address and NotifyFunction address
+
 the usermode client WFPEnum leverages that IOCTL for each callout id enumerated by FwpmCalloutEnum and display all information (the addresses , name , layer guid etc...) about each registered callout 
 
 running it we get the following output : ) 
