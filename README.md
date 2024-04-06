@@ -45,7 +45,7 @@ the basic policy is :
 
 
 # Enumerating Callouts  
-the more complex and interesting network filtering and inspection logic is implemented within the callouts , enumerating registered callouts (and their actual addresses) can be useful for anyone with the intention of silecing or manipulating those callouts , or , if you are a WFP driver developer, for debugging.  so where do we start ?  
+the more complex and interesting network filtering and inspection logic is implemented through callouts , enumerating registered callouts (and their actual addresses) can be useful for anyone with the intention of silecing or manipulating them , or if you are a WFP driver developer -for debugging.  so where do we start ?  
 
 a driver registers a callout with the filter engine using FwpsCalloutRegister
 
