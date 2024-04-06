@@ -1,7 +1,7 @@
 # WFPResearch
 short research revolving the windows filtering platform callout mechanism 
 
-# Sources 
+# TL;DR - the provided sources   
 WFPEnum and WFPEnumDriver can be used to enumerate all registered callouts on the system (outputting their actual addresses, load the driver and run the client) 
 WFPCalloutDriver is a PoC callout driver (mainly used it for debugging but you can have a look to see the registration process) 
 
@@ -10,21 +10,24 @@ if it's the first time you hear about WFP , I highly recommend you read https://
 
 so , the windows filtering platform (WFP) is a framework designated for host-based network traffic filtering , replacing the older NDIS and TDI filtering capabilities 
 
-WFP exposes both UM and KM apis , offering the ability to block , permit or aduit network tarffic based on conditions or deep packet inspection (through callouts)  
+WFP exposes both UM and KM apis , offering the ability to block , permit or aduit network traffic based on conditions or deep packet inspection (through callouts)  
 
 as you might have guessed , WFP can be (and is) used by the windows firewall, network filters of security software and even rootkits.
 
 ### layers, sublayers , filters and shims 
-layers are used to categorize the network traffic to be evaluated , there are roughly a hundred layers (each is identified by a GUID) where filters and callouts can be attached and each represents a location the network processing path of a potential packet (for example you can attach on FWPM_LAYER_INBOUND_TRANSPORT_V4 which is  located in the receive path just after a received packet's transport header has been parsed by the network stack at the transport layer, but before any transport layer processing takes place) 
+layers are used to categorize the network traffic to be evaluated , there are roughly a hundred layers (each is identified by a GUID) where filters and callouts can be attached and each represents a location the network processing path of a potential packet (for example you can attach on FWPM_LAYER_INBOUND_TRANSPORT_V4 which is located in the receive path just after a received packet's transport header has been parsed by the network stack at the transport layer, but before any transport layer processing takes place) 
 
 next we have filters , which are made up from conditions (source port , ip , application etc) and action (permit, block, callout unknown, callout terminating and callout inspection) 
 
 when the action is a callout the filter engine will call the callout classify function whenever the filter conditions match.
-a callout can return permit , block or continue (meaning the filter should be 'ignored') , if the action is callout terminating the callout should only return permit or block , if the it's inspection it should only return continue, unknown means the callout might terminate or not based on the result of the classification , 
+a callout can return permit , block or continue (meaning the filter should be 'ignored') , if the action is callout terminating the callout should only return permit or block , if the action is callout inspection it should only return continue, lastly callout unknown means the callout might terminate or not based on the result of the classification.
 
 a sublayer is essentially a way to logically group filters (say you filter TCP traffic , and want to have different filters for ports hight than 1000 and lower than 1000 , you can create two sublayers) , hopfully it'll be more clear in the next section 
 
-lastly we have the shims , a kernel component which is responsible for starting the classification -> applying the correct filters, potentially callouts to , at the end , make a decision regarding allowing / blocking the packet , the shim is called by the tcpip driver when a packet arrives at the network stack (of course , for each layer it goes through) 
+lastly we have the shims , a kernel component which is responsible for starting the classification -> applying the correct filters, potentially callouts to , at the end , make a decision regarding allowing / blocking the packet , the shim is called by the tcpip driver when a packet arrives at the network stack (of course , for each layer it goes through) , as indicated by the following callstack
+
+![shimcallstack](https://github.com/0mWindyBug/WFPResearch/assets/139051196/f7007c83-2d52-48fb-8755-a6e29e08fff0)
+
 
 ### Weight , Filter Arbitration and Policy 
 filter arbitration is the logic built into the WFP that is used to define how filters work with each other when making network filtering decisions 
@@ -45,7 +48,8 @@ the basic policy is :
 
 
 # Enumerating Callouts  
-the more complex and interesting network filtering and inspection logic is implemented through callouts , enumerating registered callouts (and their actual addresses) can be useful for anyone with the intention of silecing or manipulating them , or if you are a WFP driver developer -for debugging.  so where do we start ?  
+the more complex and interesting network filtering and inspection logic is implemented through callouts , enumerating registered callouts (and their actual addresses) can be useful for anyone with the intention of silencing or manipulating them , or , for debugging purposes in case you are a WFP driver developer.
+so where do we start ?  
 
 a driver registers a callout with the filter engine using FwpsCalloutRegister , passing a structure that describes the callout to be registered 
 ```
@@ -57,8 +61,12 @@ typedef struct FWPS_CALLOUT0_ {
   FWPS_CALLOUT_FLOW_DELETE_NOTIFY_FN0 flowDeleteFn;
 } FWPS_CALLOUT0;
 ```
-the classify function is where the actual filtering logic is present , notify function is called when a filter that references the callout is added or removed 
-one more thing to note is a flag called FWP_CALLOUT_FLAG_CONDITIONAL_ON_FLOW  - A callout driver can specify this flag when registering a callout that will be added at a layer that supports data flows. If this flag is specified, the filter engine calls the callout driver's classifyFn0 callout function only if there is a context associated with the data flow. A callout driver associates a context with a data flow by calling the FwpsFlowAssociateContext0 function.
+the classify function is where the actual filtering logic is present , notify function is called when a filter that references the callout is added or removed .
+one more thing to note is a flag called FWP_CALLOUT_FLAG_CONDITIONAL_ON_FLOW , as MSDN says :
+"A callout driver can specify this flag when registering a callout that will be added at a layer that supports data flows. If this flag is specified, the filter engine calls the callout driver's classifyFn0 callout function only if there is a context associated with the data flow. A callout driver associates a context with a data flow by calling the FwpsFlowAssociateContext0 function." 
+
+we will come back to this ...
+
 
 in addition , a driver has to add the callout to a layer on the system using FwpmCalloutAdd (can also be done from UM)
 
@@ -68,8 +76,8 @@ generally , a callout is registered with a GUID, and identified internally by th
 
 an example callout driver is provided in the sources to demonstrate the registration of a filter that uses a callout 
 
-##  reversing the callout registration mechanism
-as always with callouts (or 'callbacks) mechanisms , the registration function is a good starting point as it's likely at one point or another interact with how callouts are organised internally , reversing FwpsCalloutRegister we end up with the following sequence of calls : 
+##  Reversing the callout registration mechanism
+as always with callouts (or 'callbacks') mechanisms , the registration function is a good starting point as it's likely at one point or another to interact with how callouts are organised internally , reversing FwpsCalloutRegister you'll end up with the following sequence of calls : 
 
 fwpkclnt!FwpsCalloutRegister<X> -> fwpkclnt!FwppCalloutRegister -> fwpkclnt!FwppCalloutRegister -> NETIO!KfdAddCalloutEntry -> NETIO!FeAddCalloutEntry
 
@@ -147,21 +155,21 @@ messing around with other references to this offset , you'll find a function cal
 
 The default initial size of this memory(gWfpGlobal!0x198) is 0x14000 bytes. 
 every time there is a WFP registration, this value can be expanded/modified as needed ->  memory will be re-applied, data copied, and then the original memory will be deleted.
-also , as you can see gWfpGlobal+0x190 is initialized with 1024 , 1024 * 0x50 (entry size) = 0x14000 , meaning g_WfpGlobal+0x190 stores the max callout id in the array / number of entries. 
+in addition , as you can see gWfpGlobal+0x190 is initialized with 1024 , 1024 * 0x50 (entry size) = 0x14000 , meaning g_WfpGlobal+0x190 stores the max callout id in the array / number of entries. 
 
 #### FeGetWfpGlobalPtr 
 there's an exported function by NETIO that will return the address of gWfpGlobal
+
 ![getwfpglobalptr](https://github.com/0mWindyBug/WFPResearch/assets/139051196/707f581a-82fe-42bc-961b-85afe1887b48)
 
-
-by now , we have enough knowledge to : 
+#### by now , we have enough knowledge to : 
 * find the address of NETIO!gWfpGlobal (sig scan from UM or FeGetWfpGlobalPtr if you can load a driver)
 * read offsets 0x198 and 0x190 to get the array pointer and the maximum number of entries
 * traverse all entries , the address stored at offset 0x10 from each entry is the classify callout : )
 
 whilst this is certianly an option , and it has actually been actually used in the wild (by Lazarus's FudModule rootkit) , it's not the most reliable approach we can take . 
 
-### NETIO!KfdGetRefCallout 
+#### NETIO!KfdGetRefCallout 
 there's a function called GetCalloutEntry in NETIO which is hard to not notice , reversed code below 
 ![GetCalloutEntry](https://github.com/0mWindyBug/WFPResearch/assets/139051196/f7155b25-4115-45ea-8176-3b3bcb4cb105)
 
@@ -171,7 +179,7 @@ even better ? there's an undocumented export called NETIO!KfdGetRefCallout which
 
 ( note : we have to call NETIO!KfdDeRefCallout for each call )
 
-### FwpmCalloutEnum usermode API 
+#### FwpmCalloutEnum usermode API 
 putting it all together , we can find all registered callout ids on the system with the FwpmCalloutEnum0 API from usermode 
 the provided source WFPEnumDriver exposes an IOCTL that gets a callout id , and returns it's corresponding the CalloutEntry pointer , ClassifyFunction and NotifyFunction 
 the usermode client WFPEnum leverages that IOCTL for each callout id enumerated by FwpmCalloutEnum and display all information (the addresses , name , layer guid etc...) about each registered callout 
@@ -180,50 +188,15 @@ running it we get the following output : )
 ![CalloutsOutput](https://github.com/0mWindyBug/WFPResearch/assets/139051196/6c8d8ddf-18ed-4fad-919f-48ef2af3580b)
 
 
+## Silencing callouts - some general ideas 
+so , let's say you want to hide your traffic from an AV / AC product , that uses a WFP network filter to scan the same type of traffic
+1. Assuming you can load a driver , hooking those callouts can be a solution , prefix your traffic with a certian magic number , in your hook classify callout inspect the data, if it has your magic return continue (which will call the next filters for your packet , if any - skipping the AV / AC one) if it's not just call the original callout
+you'd also have to maintain a rundown ref for pending operations to avoid premature unloading ( WFP handles it for the registered driver by calling ObRefenceObject on the CalloutEntry->DeviceObject and deref when it's callout returns)
+2. what if you dont have a driver ? one idea that might come up is nulling the entire callout entry of the target callout you want to avoid. one side effect will be the callout will never be called , which can be suspicious. another side effect may arise if the targeted filter callout action is anything but callout inspection , quoting MSDN
+```
+A callout and filters that specify the callout for the filter's action can be added to the filter engine before a callout driver registers the callout with the filter engine. In this situation, filters with an action type of FWP_ACTION_CALLOUT_TERMINATING or FWP_ACTION_CALLOUT_UNKNOWN are treated as FWP_ACTION_BLOCK, and filters with an action type of FWP_ACTION_CALLOUT_INSPECTION are ignored until the callout is registered with the filter engine.
+```
+it's best you use WFPExplorer(https://github.com/zodiacon/WFPExplorer) to understand those details about the callout you want to silence and see if nulling is an option for you or not 
 
-
-
- functions we might be able to take advantage of in the process are 
-1. FwpmCalloutEnum(allowing us to enumerate all callout ids from usermode)
-2. KfdGetRefCallout (allowing us to get a callout struct pointer from callout id , undocumented export of netio.sys), we must call KfdDeRefCallout to decrement the reference
-3. FeGetWfpGlobalPtr (returns a pointer to WfpGlobal)
-
-practically : 
-__int64 __fastcall KfdGetRefCallout(__int64 CalloutId, _QWORD *CalloutEntry) 
-
-it will call -> FeGetRefCalloutEx(CalloutId, 0, &LocCalloutEntry); 
-
-which in turn calls 
-
-GetCalloutEntryEx(CalloutId, Zero, CalloutEntryPtr);
-
-which checks 
- if ( CalloutId >= *(_DWORD *)(gWfpGlobal + 0x198) )
-
- and if the callout id is smaller 
-
- CalloutEntry = 0x60i64 * CalloutId + *(_QWORD *)(gWfpGlobal + 0x1A0);
-
-
-
-The gWfpGlobal structure has a member called CalloutTable (named by yourself), which is a pointer. The default initial size of this memory is 0x14000 bytes.
-Every time there is a WFP registration, this value will be expanded/modified: memory will be re-applied, data copied, and then the original memory will be deleted.
-
-
-# Callout Registration 
-
-fwpkclnt!FwpsCalloutRegister<X> -> fwpkclnt!FwppCalloutRegister -> ( fwpkclnt!FwppCalloutFindByKey) (there's also some global named gFwppCallouts)
-fwpkclnt!FwppCalloutRegister -> NETIO!KfdAddCalloutEntry 
-
- NETIO!KfdAddCalloutEntry -> NETIO!FeAddCalloutEntry -> WfpAllocateCalloutEntry
-
-## Callout Invocation 
-
-
-## Silencing Callouts  
-   
-some question marks ?
-1. which functiom is responsible for invoking callouts , have a short look at it
-2. how can we call KfdGetRefCallout and KfdDeRefCallout? what is the prototype ? how can we call FeGetWfpGlobalPtr? 
-3. are callout ids guranteed to be in acceding order ? send the max ID over IOCTL and for each get the callout structure ?
-4. where is the callout layer stored ? when we register callout in the filter engine it gets added to the wfpglobal array? maybe the invocation process iterates over the layer's registered callout ids and finds the corresponding callout classify 
+3. remember that 'FWP_CALLOUT_FLAG_CONDITIONAL_ON_FLOW' flag ? you could intentionally flip it (enable it) in the callout entry so any callout without an associated data flow context (read more here https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/fwpsk/ns-fwpsk-fwps_callout0_)
+this is oviously not fullproof as some callouts might use a data flow context by design , hence will have a data flow context and the callout will still be triggered. 
