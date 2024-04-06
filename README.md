@@ -2,7 +2,7 @@
 short research revolving the windows filtering platform callout mechanism 
 
 # TL;DR - the provided sources   
-WFPEnum and WFPEnumDriver can be used to enumerate all registered callouts on the system (outputting their actual addresses, load the driver and run the client) 
+WFPEnum and WFPEnumDriver can be used to enumerate all registered callouts on the system (including their actual addresses, load the driver and run the client) 
 WFPCalloutDriver is a PoC callout driver (mainly used it for debugging but you can have a look to see the registration process) 
 
 # quick overview of the windows filtering platform 
