@@ -195,8 +195,9 @@ running it we get the following output : )
 ## Silencing callouts - some general ideas 
 so , let's say you want to hide your traffic from an AV / AC product , that uses a WFP network filter to scan traffic on a layer you are using 
 1. Assuming you can load a driver , hooking those callouts can be a solution , prefix your traffic with a certian magic number , in your hook classify callout inspect the data, if it has your magic return continue (which will call the next filters for your packet , if any - skipping the AV / AC one) if it's not just call the original callout
-you'd also have to maintain a rundown ref for pending operations to avoid premature unloading ( WFP handles it for the registered driver by calling ObRefenceObject on the CalloutEntry->DeviceObject and deref when it's callout returns)
-2. what if you dont have a driver ? one idea that might come up is nulling the entire callout entry of the target callout you want to avoid. one side effect will be the callout will never be called , which can be suspicious. another side effect may arise if the targeted filter callout action is anything but callout inspection , quoting MSDN
+   
+you'd also have to maintain a rundown ref for pending operations to avoid premature unloading ( generally WFP handles it for the registered driver by calling ObRefenceObject on the CalloutEntry->DeviceObject and deref when it's callout returns, IoCheckUnlodDriver wont unload as long as the driver in question has a refernfed device object...)
+3. what if you dont have a driver ? one idea that might come up is nulling the entire callout entry of the target callout you want to avoid. one side effect will be the callout will never be called , which can be suspicious. another side effect may arise if the targeted filter callout action is anything but callout inspection , quoting MSDN
 ```
 A callout and filters that specify the callout for the filter's action can be added to the filter engine before a callout driver registers the callout with the filter engine. In this situation, filters with an action type of FWP_ACTION_CALLOUT_TERMINATING or FWP_ACTION_CALLOUT_UNKNOWN are treated as FWP_ACTION_BLOCK, and filters with an action type of FWP_ACTION_CALLOUT_INSPECTION are ignored until the callout is registered with the filter engine.
 ```
