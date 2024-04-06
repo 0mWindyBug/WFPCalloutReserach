@@ -1,0 +1,8 @@
+﻿  main.cpp
+  wfp.cpp
+  Generating code
+  99 of 115 functions (86.1%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    1 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  WFPEnumUM.vcxproj -> C:\Users\dorge\source\repos\WFPEnumUM\x64\Release\WFPEnumUM.exe
