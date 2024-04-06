@@ -44,7 +44,7 @@ the basic policy is :
 * a block decision is final , packet is discarded
 
 
-# Enumerating Callouts  
+## Enumerating Callouts  
 the more complex and interesting network filtering and inspection logic is implemented through callouts , enumerating registered callouts (and their actual addresses) can be useful for anyone with the intention of silecing or manipulating them , or if you are a WFP driver developer -for debugging.  so where do we start ?  
 
 a driver registers a callout with the filter engine using FwpsCalloutRegister
@@ -57,6 +57,7 @@ generally , a callout is registered with a GUID, and identified internally by th
 
 an example callout driver is provided in the sources to demonstrate the registration of a filter that uses a callout 
 
+#### Callout Registration 
 
 
  functions we might be able to take advantage of in the process are 
