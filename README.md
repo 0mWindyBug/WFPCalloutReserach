@@ -59,7 +59,10 @@ an example callout driver is provided in the sources to demonstrate the registra
 
 ####  reversing the callout registration process
 as always with callouts (or 'callbacks) mechanisms , the registration function is a good starting point as it's likely at one point or another interact with how callouts are organised internally , reversing FwpsCalloutRegister we end up with the following sequence of calls : 
+
 fwpkclnt!FwpsCalloutRegister<X> -> fwpkclnt!FwppCalloutRegister -> fwpkclnt!FwppCalloutRegister -> NETIO!KfdAddCalloutEntry -> NETIO!FeAddCalloutEntry
+
+reversed code of NETIO!FeAddCalloutEntry is shown below 
 
 ```
 
