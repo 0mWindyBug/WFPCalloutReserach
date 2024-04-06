@@ -172,10 +172,10 @@ there's an exported function by NETIO that will return the address of gWfpGlobal
 whilst this is certianly an option , and it has actually been actually used in the wild (by Lazarus's FudModule rootkit) , it's not the most reliable approach we can take . 
 
 #### NETIO!KfdGetRefCallout 
-there's a function called GetCalloutEntry in NETIO which is hard to not notice , reversed code below 
+there's a function called GetCalloutEntry in NETIO which is hard to *not* notice , reversed code below 
 ![GetCalloutEntry](https://github.com/0mWindyBug/WFPResearch/assets/139051196/f7155b25-4115-45ea-8176-3b3bcb4cb105)
 
-even better ? there's an undocumented export called NETIO!KfdGetRefCallout which essentially wraps this GetCalloutEntry 
+even better ? there's an undocumented export called NETIO!KfdGetRefCallout which essentially wraps  GetCalloutEntry 
 (KfdGetRefCallout -> FeGetRefCallout > GetCalloutEntry) , now , by callout id we can get a pointer to it's corresponding callout entry without relying on the gWfpGlobal offsets : ) 
 ![KfdGetREF](https://github.com/0mWindyBug/WFPResearch/assets/139051196/02e880ef-74d2-4202-9dff-0b765029c6a1)
 
