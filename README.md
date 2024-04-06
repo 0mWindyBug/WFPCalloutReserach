@@ -193,15 +193,20 @@ running it we get the following output : )
 
 
 ## Silencing callouts - some general ideas 
-so , let's say you want to hide your traffic from an AV / AC product , that uses a WFP network filter to scan traffic on a layer you are using 
-1. Assuming you can load a driver , hooking those callouts can be a solution , prefix your traffic with a certian magic number , in your hook classify callout inspect the data, if it has your magic return continue (which will call the next filters for your packet , if any - skipping the AV / AC one) if it's not just call the original callout
+so , let's say you want to hide your traffic from an AV / AC product , that uses a WFP network filter to scan traffic on a layer you are using
+
+#### hooking the callout 
+Assuming you can load a driver , hooking those callouts can be a solution , prefix your traffic with a certian magic number , in your hook classify callout inspect the data, if it has your magic return continue (which will call the next filters for your packet , if any - skipping the AV / AC one) if it's not just call the original callout
    
 you'd also have to maintain a rundown ref for pending operations to avoid premature unloading ( generally WFP handles it for the registered driver by calling ObRefenceObject on the CalloutEntry->DeviceObject and deref when it's callout returns, IoCheckUnlodDriver wont unload as long as the driver in question has a refernfed device object...)
-3. what if you dont have a driver ? one idea that might come up is nulling the entire callout entry of the target callout you want to avoid. one side effect will be the callout will never be called , which can be suspicious. another side effect may arise if the targeted filter callout action is anything but callout inspection , quoting MSDN
+
+#### nulling the entry 
+what if you dont have a driver ? one idea that might come up is nulling the entire callout entry of the target callout you want to avoid. one side effect will be the callout will never be called , which can be suspicious. another side effect may arise if the targeted filter callout action is anything but callout inspection , quoting MSDN
 ```
 A callout and filters that specify the callout for the filter's action can be added to the filter engine before a callout driver registers the callout with the filter engine. In this situation, filters with an action type of FWP_ACTION_CALLOUT_TERMINATING or FWP_ACTION_CALLOUT_UNKNOWN are treated as FWP_ACTION_BLOCK, and filters with an action type of FWP_ACTION_CALLOUT_INSPECTION are ignored until the callout is registered with the filter engine.
 ```
-  it's best you use WFPExplorer(https://github.com/zodiacon/WFPExplorer) to understand those details about the callout you want to silence and see if nulling is an option for you or not 
+it's best you use WFPExplorer(https://github.com/zodiacon/WFPExplorer) to understand those details about the callout you want to silence and see if nulling is an option for you or not 
 
-3. remember that 'FWP_CALLOUT_FLAG_CONDITIONAL_ON_FLOW' flag ? you could intentionally flip it (enable it) in the callout entry so any callout without an associated data flow context (read more here https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/fwpsk/ns-fwpsk-fwps_callout0_)
+#### enabling a callout entry flag 
+ remember that 'FWP_CALLOUT_FLAG_CONDITIONAL_ON_FLOW' flag ? you could intentionally flip it (enable it) in the callout entry so any callout without an associated data flow context (read more here https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/fwpsk/ns-fwpsk-fwps_callout0_)
 this is oviously not fullproof as some callouts might use a data flow context by design , hence will have a data flow context and the callout will still be triggered. 
