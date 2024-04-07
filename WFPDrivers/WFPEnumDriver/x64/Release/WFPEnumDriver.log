@@ -1,0 +1,37 @@
+﻿  Building 'WFPEnumDriver' with toolset 'WindowsKernelModeDriver10.0' and the 'Desktop' target platform.
+  Stamping x64\Release\WFPEnumDriver.inf
+  Stamping [Version] section with DriverVer=04/07/2024,21.2.13.206
+C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\WFPEnumDriver\WFPEnumDriver.inf(27-27): warning 2083: Section [standard.ntamd64] not referenced or used.
+  Ioctl.cpp
+C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\WFPEnumDriver\Ioctl.cpp(17,41): warning C4100: 'DeviceObject': unreferenced formal parameter
+  main.cpp
+C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\WFPEnumDriver\utils.h(38,8): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\WFPEnumDriver\utils.h(38,8): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+  utils.cpp
+C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\WFPEnumDriver\utils.h(38,8): warning C4200: nonstandard extension used: zero-sized array in struct/union
+C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\WFPEnumDriver\utils.h(38,8): message : This member will be ignored by a defaulted constructor or copy/move assignment operator
+C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\WFPEnumDriver\utils.cpp(12,17): warning C4146: unary minus operator applied to unsigned type, result still unsigned
+C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\WFPEnumDriver\utils.cpp(106,23): warning C4018: '<': signed/unsigned mismatch
+C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\WFPEnumDriver\utils.cpp(95,55): warning C4996: 'ExAllocatePoolWithTag': ExAllocatePoolWithTag is deprecated, use ExAllocatePool2.
+C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\WFPEnumDriver\utils.cpp(176,22): warning C4996: 'ExAllocatePool': ExAllocatePool is deprecated, use ExAllocatePool2.
+C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\WFPEnumDriver\utils.cpp(275,13): warning C4505: 'Copy_Memory': unreferenced function with internal linkage has been removed
+  wfp.cpp
+  Generating Code...
+  WFPEnumDriver.vcxproj -> C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\x64\Release\WFPEnumDriver.sys
+  Done Adding Additional Store
+  Successfully signed: C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\x64\Release\WFPEnumDriver.sys
+  
+  .........................
+  Signability test complete.
+  
+  Errors:
+  None
+  
+  Warnings:
+  None
+  
+  Catalog generation complete.
+  C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\x64\Release\WFPEnumDriver\wfpenumdriver.cat
+  Done Adding Additional Store
+  Successfully signed: C:\Users\dorge\Downloads\WFPCalloutReserach-main\WFPCalloutReserach-main\WFPDrivers\x64\Release\WFPEnumDriver\wfpenumdriver.cat
+  
