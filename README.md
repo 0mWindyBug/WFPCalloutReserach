@@ -207,7 +207,7 @@ A callout and filters that specify the callout for the filter's action can be ad
 ```
 it's best you use WFPExplorer (https://github.com/zodiacon/WFPExplorer) to understand those details about the callout you want to silence and see if nulling is an option for you or not 
 
-in another note  ,NETIO!KfdFindFilterById could be useful for understanding how filter entries are organised, it's imported and used by tcpip.sys. maybe manipulate the filter action type ? you could also try to trace the filter registration process , there's rpc involved 
+in another note  ,NETIO!KfdFindFilterById could be useful for understanding how filter entries are organised, it's imported and used by tcpip.sys. maybe manipulate the filter action type ? you could also try to trace the filter registration process , there's rpc involved (BfeFilterAdd is invoked)
 
 #### enabling a callout entry flag 
  remember that 'FWP_CALLOUT_FLAG_CONDITIONAL_ON_FLOW' flag ? you could intentionally flip it (enable it) in the callout entry so any callout without an associated data flow context will be ignored (read more here https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/fwpsk/ns-fwpsk-fwps_callout0_)
