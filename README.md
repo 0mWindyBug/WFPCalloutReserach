@@ -202,9 +202,13 @@ you'd also have to maintain a rundown ref for pending operations to avoid premat
 
 #### nulling the entry 
 what if you dont have a driver ? one idea that might come up is nulling the entire callout entry of the target callout you want to avoid. one side effect will be the callout will never be called , which can be suspicious. another side effect may arise if the targeted filter callout action is anything but callout inspection , quoting MSDN
-```
-A callout and filters that specify the callout for the filter's action can be added to the filter engine before a callout driver registers the callout with the filter engine. In this situation, filters with an action type of FWP_ACTION_CALLOUT_TERMINATING or FWP_ACTION_CALLOUT_UNKNOWN are treated as FWP_ACTION_BLOCK, and filters with an action type of FWP_ACTION_CALLOUT_INSPECTION are ignored until the callout is registered with the filter engine.
-```
+
+* "A callout and filters that specify the callout for the filter's action can be added to the filter engine before a callout driver registers the callout with the filter engine. In this situation, filters with an action type of FWP_ACTION_CALLOUT_TERMINATING or FWP_ACTION_CALLOUT_UNKNOWN are treated as FWP_ACTION_BLOCK, and filters with an action type of FWP_ACTION_CALLOUT_INSPECTION are ignored until the callout is registered with the filter engine.
+"
+it's worth noting that a filter can have the FWPM_FILTER_FLAG_PERMIT_IF_CALLOUT_UNREGISTERED flag set , but as long as it does not, and the filter action type is callout terminating or unknown, nulling the entry will be equivalentto returning block from the sublayer ):
+
+
+
 it's best you use WFPExplorer (https://github.com/zodiacon/WFPExplorer) to understand those details about the callout you want to silence and see if nulling is an option for you or not 
 
 in another note  ,NETIO!KfdFindFilterById could be useful for understanding how filter entries are organised, it's imported and used by tcpip.sys. maybe manipulate the filter action type ? you could also try to trace the filter registration process , there's rpc involved - BfeRpcFilterAdd (procNum = 0x45) is invoked
