@@ -5,7 +5,7 @@ short research revolving the windows filtering platform callout mechanism
 WFPEnumUM and WFPEnumDriver can be used to enumerate all registered callouts on the system (including their actual addresses, to use just load the driver and run the client) 
 WFPCalloutDriver is a PoC callout driver (mainly used it for debugging but you can have a look to see the registration process) 
 
-the last section of the readme suggests some general ideas for taking it a step further and manipulating / silencing those callouts 
+the last section of the readme suggests some general ideas for taking it a step further and manipulating / silencing  callouts 
 
 # quick overview of the windows filtering platform 
 if it's the first time you hear about WFP , I highly recommend you read https://scorpiosoftware.net/2022/12/25/introduction-to-the-windows-filtering-platform/ 
@@ -192,6 +192,7 @@ running it we get the following output : )
 ![CalloutsOutput](https://github.com/0mWindyBug/WFPResearch/assets/139051196/6c8d8ddf-18ed-4fad-919f-48ef2af3580b)
 
 
+
 ## Silencing callouts - some general ideas 
 so , let's say you want to hide your traffic from an AV / AC product , that uses a WFP network filter to scan traffic on a layer you are using
 
@@ -209,17 +210,24 @@ what if you dont have a driver ? an idea that might come up is nulling the entir
 it's worth noting that a filter can have the FWPM_FILTER_FLAG_PERMIT_IF_CALLOUT_UNREGISTERED flag set , but as long as it does not, and the filter action type is callout terminating or unknown, nulling the entry will be equivalent to returning block from the sublayer ):
 
 so how can we overcome this ?
-a thoeretical approach would be to manipulte the filter structure in memory and change the action type to callout inspection , making WFP ignore our silenced filter(and callout) , I haven't implemented it but you may find NETIO!KfdFindFilterById useful , here's the partly reversed prototype and code :
-(tbd)
+a thoeretical approach would be to manipulte the filter structure in memory and change the action type to callout inspection , making WFP ignore our silenced filter(and callout) , I haven't implemented it but you may find the export NETIO!KfdFindFilterById useful , here's the partly reversed prototype and code :
 
+![image](https://github.com/0mWindyBug/WFPCalloutReserach/assets/139051196/62961a23-1993-4fee-8efe-2dc712bdfa12)
 
+under the hood , filters are organised in a hash table (gWfpGlobal + 0x180 , build dependent) where the hash index is calculated based on the layer and filter id as shown below 
 
+![image](https://github.com/0mWindyBug/WFPCalloutReserach/assets/139051196/622e1e25-0832-4215-ba3f-ca8f36ade49d)
 
+#### NETIO!FeDefaultClassifyCallback
+an alternative that can be used as part of a data only attack , have a look at the following : 
 
+![image](https://github.com/0mWindyBug/WFPCalloutReserach/assets/139051196/9eefa96b-2823-4dce-825a-638d0917e9c7)
 
- 
+![ClassifyDefault](https://github.com/0mWindyBug/WFPCalloutReserach/assets/139051196/50c8d19c-58ad-4cc1-8d1b-c2312196f149)
 
-in another note  ,NETIO!KfdFindFilterById could be useful for understanding how filter entries are organised, it's imported and used by tcpip.sys. maybe manipulate the filter action type ? you could also try to trace the filter registration process , there's rpc involved - BfeRpcFilterAdd (procNum = 0x45) is invoked
+the default filter engine classify callout will almost always returns permit , thus we can replace the EDR / AV / AC classify callout with it , avoiding the unwanted side effect of nulling a callout terminating / unknown entry and causing legitimate traffic to be blocked , the only side effect with this is traffic that would have been orginially blocked by the AV / EDR will now be permitted , which can be considered acceptable  - down to you : ) 
+
+the address of gFeCallout can be easily found via pattern scanning , adding an offset we have FeDefaultClassifyCallback . 
 
 #### enabling a callout entry flag 
  remember that 'FWP_CALLOUT_FLAG_CONDITIONAL_ON_FLOW' flag ? you could intentionally flip it (enable it) in the callout entry so any callout without an associated data flow context will be ignored (read more here https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/fwpsk/ns-fwpsk-fwps_callout0_)
