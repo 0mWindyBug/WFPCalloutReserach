@@ -225,9 +225,14 @@ an alternative that can be used as part of a data only attack , have a look at t
 
 ![ClassifyDefault](https://github.com/0mWindyBug/WFPCalloutReserach/assets/139051196/50c8d19c-58ad-4cc1-8d1b-c2312196f149)
 
-the default filter engine classify callout will almost always returns permit , thus we can replace the EDR / AV / AC classify callout with it , avoiding the unwanted side effect of nulling a callout terminating / unknown entry and causing legitimate traffic to be blocked , the only side effect with this is traffic that would have been orginially blocked by the AV / EDR will now be permitted , which can be considered acceptable  - down to you : ) 
 
-the address of gFeCallout can be easily found via pattern scanning , adding an offset we have FeDefaultClassifyCallback . 
+the default filter engine classify callout will almost always return permit , thus we can replace the EDR / AV / AC classify callout with it , avoiding the unwanted side effect of nulling a callout terminating / unknown entry and causing legitimate traffic to be blocked , the only side effect with this is traffic that would have been orginially blocked by the AV / EDR will now be permitted , which can be considered acceptable  - down to you : ) 
+
+the address of gFeCallout can be easily found via pattern scanning , adding an offset we have FeDefaultClassifyCallback .
+
+what is the legitimate usage of FeDefaultClassifyCallback you was wondering ? it seems at least to be used in the FeDeleteCalloutEntry, maybe to mark the callout as invalid when it is in the process of being freed
+the function resets the is_enabled flag, and waits for its refcount to drop to 0 (if other threads are interacting with the object) then continues to delete the callout
+so it does makes sense that if the flag is 0, any function trying to get the callout object retrieves a "default/blank" one instead
 
 #### enabling a callout entry flag 
  remember that 'FWP_CALLOUT_FLAG_CONDITIONAL_ON_FLOW' flag ? you could intentionally flip it (enable it) in the callout entry so any callout without an associated data flow context will be ignored (read more here https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/fwpsk/ns-fwpsk-fwps_callout0_)
